@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minha conta — {{ nome }}</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100dvh; background: #000; color: #eaf3ff;
+      font-family: system-ui, sans-serif; padding: 24px 16px;
+    }
+    .wrap { max-width: 520px; margin: 0 auto; display: grid; gap: 20px; }
+    h1 { margin: 0; font-size: 1.5rem; }
+    .card {
+      border: 1px solid #333; padding: 18px 16px; display: grid; gap: 10px;
+    }
+    .card h2 { margin: 0; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8a94a6; }
+    .valor { font-size: 1.2rem; font-weight: 600; }
+    .muted { color: #8a94a6; font-size: 0.9rem; }
+    button, .btn {
+      display: inline-block; background: #eaf3ff; color: #000; border: 0;
+      padding: 10px 16px; font-weight: 600; cursor: pointer; text-decoration: none;
+      text-align: center;
+    }
+    button.sec, .btn.sec { background: transparent; color: #eaf3ff; border: 1px solid #555; }
+    .acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Minha conta</h1>
+
+    <div class="card">
+      <h2>Plano atual</h2>
+      <div class="valor">{{ usuario.plano | default("Sem plano") }}</div>
+      <p class="muted">Gasto hoje: US$ {{ "%.4f"|format(usuario.gasto_hoje | default(0)) }}</p>
+    </div>
+
+    <div class="card">
+      <h2>Assinatura</h2>
+      <p class="muted">Aqui você poderá assinar o plano Limitado (teste com Mercado Pago).</p>
+      <div class="acoes">
+        <button type="button" disabled title="Disponível após conectar o webhook">Assinar plano Limitado</button>
+        <button type="button" class="sec" disabled>Cancelar assinatura</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Sessão</h2>
+      <p class="muted" style="word-break:break-all">Token: {{ token[:12] }}…</p>
+      <div class="acoes">
+        <a class="btn sec" href="/">Voltar ao Verttano</a>
+        <a class="btn sec" href="/login">Trocar conta</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
