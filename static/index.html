@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>Verttano</title>
+<script>
+/* ===== CONFIGURAÇÃO DO VERTTANO — edite só a linha do endpoint ===== */
+window.VERTTANO_CONFIG = {
+  endpoint: '/api/chat'   /* troque null pelo endereço do seu servidor, entre aspas. Ex.: endpoint: '/api/chat' */
+};
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
@@ -209,12 +215,12 @@ body[data-state="listening"] .mic::after{animation:ring 1.4s ease-out .7s infini
              reply / response / text / message / answer (ou texto puro).
              Deixe null para usar respostas de demonstração.
    ===================================================================== */
-const CONFIG = {
-  endpoint: null,               // ex.: '/api/chat'
+const CONFIG = Object.assign({
+  endpoint: null,               // (o endereço agora fica no topo do index.html)
   lang: 'pt-BR',
   greeting: 'Olá. Eu sou o Verttano. Toque no meu rosto e fale, ou escreva abaixo.',
   cps: 14,                      // caracteres falados por segundo (sincronia da boca)
-};
+}, window.VERTTANO_CONFIG || {});
 
 const $ = s => document.querySelector(s);
 const canvas = $('#stage'), ctx = canvas.getContext('2d');
@@ -998,7 +1004,7 @@ function toggleMic() {
    ===================================================================== */
 async function getReply(text) {
   if (!CONFIG.endpoint) {
-    return 'Recebi: ' + text + '. Esta é uma resposta de demonstração. Conecte o endereço do seu servidor em CONFIG ponto endpoint para eu responder de verdade.';
+    return 'Recebi: ' + text + '. Esta é uma resposta de demonstração: o meu servidor ainda não está conectado.';
   }
   try {
     const r = await fetch(CONFIG.endpoint, {
