@@ -95,6 +95,8 @@ select.bt{background:#000;appearance:none}
   <div class="col" id="v4" hidden>
     <div class="aj">
       <button class="bt" id="mudo" aria-pressed="false" title="Silenciar a voz das respostas">Mudo</button>
+      <button class="bt" id="trocarvoz" type="button" title="Escolher outra voz em português">Trocar voz</button>
+      <small id="vozAtual" style="opacity:.7"></small>
       <label>Modo<select class="bt" id="modo" autocomplete="off"><option>observar</option><option selected>supervisionado</option><option>liberado</option></select></label>
       <label>Qualidade da malha do rosto<select class="bt" id="qual" autocomplete="off"><option value="b">Baixa (mais leve)</option><option value="m" selected>Média</option><option value="a">Alta (mais detalhada)</option></select></label>
       <div class="info" id="info">…</div>
@@ -172,7 +174,21 @@ function visema(p){
 }
 
 /* ---------- voz: falar as respostas ---------- */
-function vozPT(){const v=window.speechSynthesis?speechSynthesis.getVoices():[];return v.find(x=>/^pt[-_]BR/i.test(x.lang))||v.find(x=>/^pt/i.test(x.lang))}
+/* Voz estilo mordomo: grave, calma e pausada. Dá para trocar a voz em Ajustes > "Trocar voz". */
+const TOM_VOZ=0.7,RITMO_VOZ=0.93,MASC=/daniel|felipe|ricardo|antonio|antônio|luciano|male|masculin/i;
+function vozesPT(){const v=window.speechSynthesis?speechSynthesis.getVoices():[];const br=v.filter(x=>/^pt[-_]BR/i.test(x.lang)),pt=v.filter(x=>/^pt/i.test(x.lang)&&!/^pt[-_]BR/i.test(x.lang));return br.concat(pt)}
+function vozPT(){
+  const l=vozesPT();if(!l.length)return undefined;
+  let salva="";try{salva=localStorage.getItem("vt_voz")||""}catch(e){}
+  return l.find(x=>x.name===salva)||l.find(x=>MASC.test(x.name))||l[0];
+}
+function trocarVoz(){
+  const l=vozesPT();if(!l.length){$("#dito").textContent="Este aparelho não informou vozes em português.";return}
+  const atual=vozPT(),prox=l[(l.indexOf(atual)+1)%l.length];
+  try{localStorage.setItem("vt_voz",prox.name)}catch(e){}
+  $("#vozAtual").textContent=prox.name;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance("Às suas ordens. Esta é a minha voz.");u.lang="pt-BR";u.voice=prox;u.pitch=TOM_VOZ;u.rate=RITMO_VOZ;speechSynthesis.speak(u)}catch(e){}
+}
 function pararFala(){clearInterval(ciclo);try{speechSynthesis.cancel()}catch(e){}if(fimFala)fimFala()}
 function mostrar(texto){
   $("#dito").textContent=texto;$("#dito").scrollTop=0;pararFala();
@@ -187,7 +203,7 @@ function mostrar(texto){
   const rodar=ms=>{clearInterval(ciclo);ciclo=setInterval(()=>{if(i>=ps.length){if(!usaTTS)fim();return}emoEm(offs[i]||0);palavra=limpar(ps[i++])},ms)};
   if(!mudo&&"speechSynthesis"in window&&!/^Não consegui falar com o cérebro/.test(texto)){
     try{
-      const corte=texto.slice(0,600),u=new SpeechSynthesisUtterance(corte);u.lang="pt-BR";const v=vozPT();if(v)u.voice=v;
+      const corte=texto.slice(0,600),u=new SpeechSynthesisUtterance(corte);u.lang="pt-BR";u.pitch=TOM_VOZ;u.rate=RITMO_VOZ;const v=vozPT();if(v)u.voice=v;
       u.onboundary=b=>{if(b.name&&b.name!=="word")return;recebeu=true;clearInterval(ciclo);emoEm(b.charIndex);const m=corte.slice(b.charIndex).match(/^\S+/);palavra=limpar(m?m[0]:"")};
       u.onend=fim;u.onerror=()=>{if(recebeu||acabou){fim();return}usaTTS=false;rodar(240)};usaTTS=true;speechSynthesis.speak(u);
       setTimeout(()=>{if(!recebeu&&!acabou)rodar(380)},1500);
@@ -251,6 +267,8 @@ $("#mic").onclick=microfone;
 $("#face").onclick=microfone;$("#face").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();microfone()}};
 $("#parar").onclick=()=>{if(ocupado)ignorar=true;api("/api/parar").catch(()=>{});pararFala();ocupado=false;usando=null;$("#conf").innerHTML="";atualizar()};
 function pintarMudo(){$("#mudo").setAttribute("aria-pressed",mudo);$("#mudo").textContent=mudo?"Mudo ligado":"Mudo"}
+$("#trocarvoz").onclick=trocarVoz;
+try{const _v=()=>{const x=vozPT();if(x)$("#vozAtual").textContent=x.name};_v();if(window.speechSynthesis)speechSynthesis.onvoiceschanged=_v}catch(e){}
 $("#mudo").onclick=()=>{mudo=!mudo;try{localStorage.setItem("vt_mudo",mudo?"1":"0")}catch(e){}if(mudo)pararFala();pintarMudo()};
 function aba(n){for(const i of[1,2,3,4]){$("#ta"+i).setAttribute("aria-pressed",i===n);$("#v"+i).hidden=i!==n}if(n===3)painel().catch(()=>{})}
 for(const i of[1,2,3,4])$("#ta"+i).onclick=()=>aba(i);
