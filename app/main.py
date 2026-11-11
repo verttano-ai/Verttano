@@ -9,6 +9,7 @@ import asyncio
 import json
 import time
 import secrets
+import re
 
 from .config import get_settings
 
@@ -59,6 +60,20 @@ def adicionar_evento(token: str, tipo: str, **dados):
     return evento
 
 
+def limpar_markdown(texto: str) -> str:
+    """Remove símbolos de formatação (**negrito**, # títulos, `código`, listas)
+    para o texto ficar limpo na tela e na voz."""
+    texto = re.sub(r"```[a-zA-Z]*\n?", "", texto)           # blocos de código
+    texto = re.sub(r"\*\*(.+?)\*\*", r"\1", texto, flags=re.S)  # **negrito**
+    texto = re.sub(r"__(.+?)__", r"\1", texto, flags=re.S)      # __negrito__
+    texto = re.sub(r"`([^`]*)`", r"\1", texto)              # `código`
+    texto = re.sub(r"^\s{0,3}#{1,6}\s*", "", texto, flags=re.M)   # # títulos
+    texto = re.sub(r"^\s*[\*\-•]\s+", "", texto, flags=re.M)       # listas
+    texto = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1", texto)       # [texto](link)
+    texto = texto.replace("**", "").replace("*", "")
+    return texto.strip()
+
+
 # -------------------------
 # Função da IA (Groq)
 # -------------------------
@@ -78,7 +93,10 @@ async def chamar_ia(token: str, texto: str) -> str:
                     f"Você é o {settings.APP_NAME}, um assistente virtual brasileiro "
                     "inteligente, direto, educado e com personalidade. "
                     "Responda sempre em português do Brasil, de forma clara e natural. "
-                    "Seja útil e objetivo."
+                    "Seja útil e objetivo. "
+                    "Suas respostas serão lidas em voz alta, então escreva em texto "
+                    "simples: nunca use Markdown, asteriscos, negrito, títulos, "
+                    "listas com símbolos ou emojis. Use frases curtas e naturais."
                 ),
             }
         ]
@@ -96,7 +114,7 @@ async def chamar_ia(token: str, texto: str) -> str:
             max_tokens=2000,
         )
 
-        resposta = (completion.choices[0].message.content or "").strip()
+        resposta = limpar_markdown((completion.choices[0].message.content or "").strip())
 
         # Atualiza histórico
         historico.setdefault(token, []).append({"role": "user", "content": texto})
