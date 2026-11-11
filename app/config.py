@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     # Groq
     GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
 
     # Mercado Pago
     MP_ACCESS_TOKEN: str = ""

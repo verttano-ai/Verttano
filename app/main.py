@@ -90,13 +90,13 @@ async def chamar_ia(token: str, texto: str) -> str:
         mensagens.append({"role": "user", "content": texto})
 
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=settings.GROQ_MODEL,
             messages=mensagens,
             temperature=0.7,
-            max_tokens=800,
+            max_tokens=2000,
         )
 
-        resposta = completion.choices[0].message.content.strip()
+        resposta = (completion.choices[0].message.content or "").strip()
 
         # Atualiza histórico
         historico.setdefault(token, []).append({"role": "user", "content": texto})
@@ -173,7 +173,7 @@ async def api_estado(token: str = Header(None, alias="x-alfred")):
     return {
         "cerebro_pronto": bool(settings.GROQ_API_KEY),
         "provedor": "groq" if settings.GROQ_API_KEY else "nenhum",
-        "modelo": "llama-3.3-70b-versatile",
+        "modelo": settings.GROQ_MODEL,
         "gasto_hoje": round(u.get("gasto_hoje", 0), 4),
         "limite": settings.LIMITE_GRATUITO_DIARIO_USD,
         "modo": u.get("modo", "supervisionado"),
